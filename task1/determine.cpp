@@ -32,7 +32,7 @@ float det(const Matrix &matrix, std::size_t thread_num) {
   thread_num = std::min(thread_num, matrix_size);
   threads.reserve(thread_num);
 
-  std::atomic<float> result;
+  std::atomic<float> result = 0;
   for (std::size_t i = 0; i < thread_num; ++i) {
     threads.emplace_back([&, i]() {
       auto idx = i;

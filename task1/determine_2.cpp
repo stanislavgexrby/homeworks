@@ -16,8 +16,10 @@ void determinant(const Matrix &matrix, float &result){
   std::vector<float> threads_results(matrix_size, 0);
 //{
   std::vector<std::thread> threads;
+
   for (int i = 0; i < matrix_size; i++) {
     auto minor = matrix.minor(std::size_t(0), i);
+
     if (number_of_threads < max_number_of_threads) {
       threads.push_back(std::thread(determinant, minor, std::ref(threads_results[i])));
       mutex.lock();

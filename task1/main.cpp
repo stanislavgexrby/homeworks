@@ -23,7 +23,7 @@ Matrix load_matrix_from_file(const std::string &file_name) {
 }
 
 int main() {
-  Matrix matrix1 = load_matrix_from_file("../data/matrix_4x4.txt");
+  Matrix matrix1 = load_matrix_from_file("../data/matrix_3x3.txt");
 
   auto start1 = std::chrono::high_resolution_clock::now();
   auto res1 = det(matrix1);
