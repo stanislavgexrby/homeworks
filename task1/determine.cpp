@@ -15,6 +15,7 @@ static float det_sequence(const Matrix &matrix) {
     auto minor_det = det_sequence(minor);
     result += num * minor_det * (i % 2 == 0 ? 1 : -1);
   }
+
   return result;
 }
 
@@ -27,7 +28,7 @@ float det(const Matrix &matrix, std::size_t thread_num) {
     return matrix.data()[0][0] * matrix.data()[1][1] - matrix.data()[1][0] * matrix.data()[0][1];
   }
 
-  std::vector<std::jthread> threads;
+  std::vector<std::thread> threads;
   thread_num = std::min(thread_num, matrix_size);
   threads.reserve(thread_num);
 
@@ -48,5 +49,6 @@ float det(const Matrix &matrix, std::size_t thread_num) {
   for (auto &thread : threads) {
     thread.join();
   }
+
   return result;
 }

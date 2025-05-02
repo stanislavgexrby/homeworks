@@ -18,7 +18,6 @@
 class Matrix {
   std::vector<std::vector<float>> _matrix;
   Matrix() {}
-
 public:
   Matrix(const int n) {
     _matrix = std::vector(n, std::vector(n, 0.0f));

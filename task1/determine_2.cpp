@@ -14,6 +14,7 @@ void determinant(const Matrix &matrix, float &result){
 
   float det = 0;
   std::vector<float> threads_results(matrix_size, 0);
+//{
   std::vector<std::thread> threads;
   for (int i = 0; i < matrix_size; i++) {
     auto minor = matrix.minor(std::size_t(0), i);
@@ -26,6 +27,7 @@ void determinant(const Matrix &matrix, float &result){
       determinant(minor, threads_results[i]);
     }
   }
+//}
 
   for (auto &thread : threads) {
     thread.join();
@@ -34,5 +36,6 @@ void determinant(const Matrix &matrix, float &result){
   for (int j = 0; j < matrix_size; j++) {
     det += (j % 2 == 0 ? 1 : -1) * matrix.data()[0][j] * threads_results[j];
   }
+
   result = det;
 }

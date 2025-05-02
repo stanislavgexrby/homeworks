@@ -1,3 +1,5 @@
+#pragma once
+
 #include "matrix.hpp"
 
 static size_t number_of_threads = 0;
