@@ -23,10 +23,10 @@ Matrix load_matrix_from_file(const std::string &file_name) {
 }
 
 int main() {
-  Matrix matrix1 = load_matrix_from_file("../data/matrix_3x3.txt");
+  Matrix matrix1 = load_matrix_from_file("../data/matrix_5x5.txt");
 
   auto start1 = std::chrono::high_resolution_clock::now();
-  auto res1 = det(matrix1);
+  auto res1 = det_low(matrix1);
   auto end1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration1 = end1 - start1;
 
@@ -36,7 +36,7 @@ int main() {
   std::cout << std::endl;
 
   auto start2 = std::chrono::high_resolution_clock::now();
-  determinant(matrix1, res2);
+  det_high(matrix1, res2);
   auto end2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration2 = end2 - start2;
 

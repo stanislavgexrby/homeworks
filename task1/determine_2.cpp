@@ -1,6 +1,6 @@
 #include "determine.hpp"
 
-void determinant(const Matrix &matrix, float &result){
+void det_high(const Matrix &matrix, float &result){
   size_t matrix_size = matrix.size();
 
   if (matrix_size == 1) {
@@ -21,12 +21,12 @@ void determinant(const Matrix &matrix, float &result){
     auto minor = matrix.minor(std::size_t(0), i);
 
     if (number_of_threads < max_number_of_threads) {
-      threads.push_back(std::thread(determinant, minor, std::ref(threads_results[i])));
+      threads.push_back(std::thread(det_high, minor, std::ref(threads_results[i])));
       mutex.lock();
       number_of_threads++;
       mutex.unlock();
     } else {
-      determinant(minor, threads_results[i]);
+      det_high(minor, threads_results[i]);
     }
   }
 //}

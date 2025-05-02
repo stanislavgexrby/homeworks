@@ -19,7 +19,7 @@ static float det_sequence(const Matrix &matrix) {
   return result;
 }
 
-float det(const Matrix &matrix, std::size_t thread_num) {
+float det_low(const Matrix &matrix, std::size_t thread_num) {
   auto matrix_size = matrix.size();
   if (matrix_size == 1) {
     return matrix.data()[0][0];
