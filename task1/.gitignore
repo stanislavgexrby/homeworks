@@ -1,0 +1,17 @@
+build/
+bin/
+*.bin
+*.exe
+*.o
+*.a
+*.so
+*.dll
+
+# Файлы IDE
+.vscode/
+.idea/
+CMakeSettings.json
+
+# Системные файлы
+.DS_Store
+Thumbs.db
