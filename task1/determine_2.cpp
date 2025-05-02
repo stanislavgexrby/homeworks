@@ -20,11 +20,9 @@ void det_high(const Matrix &matrix, float &result){
   for (int i = 0; i < matrix_size; i++) {
     auto minor = matrix.minor(std::size_t(0), i);
 
-    if (number_of_threads < max_number_of_threads) {
-      threads.push_back(std::thread(det_high, minor, std::ref(threads_results[i])));
-      mutex.lock();
-      number_of_threads++;
-      mutex.unlock();
+    if (number_of_threads.load() < max_number_of_threads) {
+      threads.emplace_back(det_high, minor, std::ref(threads_results[i]));
+      number_of_threads.fetch_add(1);
     } else {
       det_high(minor, threads_results[i]);
     }
