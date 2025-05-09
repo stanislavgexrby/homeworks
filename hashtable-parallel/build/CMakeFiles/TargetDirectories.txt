@@ -1,0 +1,3 @@
+/home/stanislav/Documents/hw/hashtable-parallel/build/CMakeFiles/hashtable-parallel.dir
+/home/stanislav/Documents/hw/hashtable-parallel/build/CMakeFiles/edit_cache.dir
+/home/stanislav/Documents/hw/hashtable-parallel/build/CMakeFiles/rebuild_cache.dir
