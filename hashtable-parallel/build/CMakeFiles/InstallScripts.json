@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/stanislav/Documents/hw/hashtable-parallel/build/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
