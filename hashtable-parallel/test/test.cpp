@@ -2,6 +2,7 @@
 #include <print>
 #include <thread>
 #include <iostream>
+#include <random>
 
 static bool test_add() {
     HashTable table;
@@ -73,13 +74,55 @@ static bool test_add_parallel() {
     return true;
 }
 
+constexpr int NUM_THREADS = 20;
+constexpr int NUM_OPERATIONS = 10'000;
+constexpr int KEY_RANGE = 100;
+
+void stress_test(HashTable& table) {
+    thread_local std::mt19937 gen(std::random_device{}());
+    thread_local std::uniform_int_distribution<int> key_dist(1, KEY_RANGE);
+    thread_local std::uniform_int_distribution<int> op_dist(0, 2);
+
+    for (int i = 0; i < NUM_OPERATIONS; ++i) {
+        int key = key_dist(gen);
+        Value val{"test", key};
+
+        switch (op_dist(gen)) {
+            case 0:
+                table.put(key, val);
+                break;
+            case 1:
+                table.remove(key);
+                break;
+            case 2:
+                table.check(key);
+                break;
+        }
+    }
+}
+
+static bool test_stress() {
+    HashTable table;
+
+    std::vector<std::jthread> threads;
+    threads.reserve(NUM_THREADS);
+
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        threads.emplace_back(stress_test, std::ref(table));
+    }
+
+    threads.clear();
+    return true;
+}
+
 bool test() {
     using TestCaseT = std::pair<std::function<bool()>, std::string_view>;
 
     std::vector<TestCaseT> cases {
         {test_add, "test_add"},
         {test_add_parallel, "test_add_parallel"},
-        {test_add_1000_parallel, "test_add_1000_parallel"}
+        {test_add_1000_parallel, "test_add_1000_parallel"},
+        {test_stress, "test_stress"}
     };
 
     bool test_passed = true;
