@@ -23,7 +23,7 @@ Matrix load_matrix_from_file(const std::string &file_name) {
 }
 
 int main() {
-  Matrix matrix1 = load_matrix_from_file("../data/matrix_5x5.txt");
+  Matrix matrix1 = load_matrix_from_file("../data/matrix_4x4.txt");
 
   auto start1 = std::chrono::high_resolution_clock::now();
   auto res1 = det_low(matrix1);
@@ -42,5 +42,5 @@ int main() {
 
   std::cout << "high level parallel result : " << res2 << '\n' << "time : " << duration2.count() << std::endl;
 
-  return 0;
+  return test() ? 0 : 1;
 }
