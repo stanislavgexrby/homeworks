@@ -7,7 +7,7 @@
 static bool test_add() {
     HashTable table;
 
-    uint32_t n = 10000;
+    size_t n = 10000;
     for (int i = 0; i < n; i++) {
         table.put(i, Value {"hi", i});
     }
@@ -23,8 +23,8 @@ static bool test_add() {
 
 static bool test_add_1000_parallel() {
     HashTable table;
-    uint32_t n_per_thread = 100;
-    uint32_t threads_num = 10;
+    size_t n_per_thread = 100;
+    size_t threads_num = 20;
     std::vector<std::jthread> threads;
     threads.reserve(threads_num);
 
@@ -35,7 +35,6 @@ static bool test_add_1000_parallel() {
             }
         });
     }
-    threads.clear();
 
     for (int i = 0; i < 1000; i++) {
         if (table.check(i) == std::nullopt) {
@@ -49,8 +48,8 @@ static bool test_add_1000_parallel() {
 static bool test_add_parallel() {
     HashTable table;
 
-    uint32_t n_per_thread = 347;
-    uint32_t threads_num = 5;
+    size_t n_per_thread = 347;
+    size_t threads_num = 5;
     std::vector<std::jthread> threads;
     threads.reserve(threads_num);
     std::atomic<int> count = 0;
@@ -63,7 +62,6 @@ static bool test_add_parallel() {
             }
         });
     }
-    threads.clear();
 
     for (int i = 0; i < count.load(); i++) {
         if (table.check(i) == std::nullopt) {
@@ -74,18 +72,15 @@ static bool test_add_parallel() {
     return true;
 }
 
-constexpr int NUM_THREADS = 20;
-constexpr int NUM_OPERATIONS = 10'000;
-constexpr int KEY_RANGE = 100;
-
-void stress_test(HashTable& table) {
+void stress_test(HashTable& table, const size_t max_rand) {
     thread_local std::mt19937 gen(std::random_device{}());
-    thread_local std::uniform_int_distribution<int> key_dist(1, KEY_RANGE);
+    thread_local std::uniform_int_distribution<int> key_dist(1, 100);
     thread_local std::uniform_int_distribution<int> op_dist(0, 2);
+    thread_local std::uniform_int_distribution<int> val_dist(1, max_rand);
 
-    for (int i = 0; i < NUM_OPERATIONS; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         int key = key_dist(gen);
-        Value val{"test", key};
+        Value val{"test", val_dist(gen)};
 
         switch (op_dist(gen)) {
             case 0:
@@ -105,13 +100,13 @@ static bool test_stress() {
     HashTable table;
 
     std::vector<std::jthread> threads;
-    threads.reserve(NUM_THREADS);
 
-    for (int i = 0; i < NUM_THREADS; ++i) {
-        threads.emplace_back(stress_test, std::ref(table));
+    size_t threads_num = 20;
+    threads.reserve(threads_num);
+    for (int i = 0; i < threads_num; ++i) {
+        threads.emplace_back(stress_test, std::ref(table), 1000);
     }
 
-    threads.clear();
     return true;
 }
 

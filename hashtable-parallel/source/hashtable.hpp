@@ -8,10 +8,6 @@
 struct Value {
     std::string str;
     int item;
-
-    bool operator==(const Value &other) const {
-      return str == other.str && item == other.item;
-    }
 };
 
 class Chain {
@@ -29,9 +25,11 @@ private:
     mutable std::shared_mutex chain_mtx;
 public:
     ~Chain();
+
     void put(int key, const Value& value);
     bool remove(int key);
     std::optional<Value> check(int key) const;
+
     void clear();
 };
 
@@ -51,6 +49,7 @@ public:
         size_t index = hash_fn(key) % container.size();
         container[index].put(key, value);
     }
+
     bool remove(int key) {
         size_t index = hash_fn(key) % container.size();
         return container[index].remove(key);
