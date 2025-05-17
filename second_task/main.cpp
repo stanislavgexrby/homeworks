@@ -9,7 +9,7 @@
 #include <mutex>
 #include <iostream>
 
-constexpr size_t size = 10000;
+constexpr size_t size = 50;
 
 static std::tuple<std::size_t, std::size_t, std::size_t> get_random_indexes(std::size_t size) {
   thread_local std::mt19937 gen(std::random_device{}());
@@ -54,7 +54,7 @@ static void naive() {
         auto sum = (*nums)[i] + (*nums)[j] + (*nums)[k];
         (*nums)[i] = (*nums)[j] = (*nums)[k] = sum;
 
-        // std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
       }
     }));
   }
@@ -80,7 +80,7 @@ static void way_a() {
           (*nums)[i] = (*nums)[j] = (*nums)[k] = sum;
         }
 
-        // std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
       }
     }));
   }
@@ -100,17 +100,25 @@ static void way_b() {
     threads.emplace_back(std::jthread([nums, mutexes](std::stop_token stop_token) {
       while (!stop_token.stop_requested()) {
         auto [i, j, k] = get_random_indexes(size);
+        std::array<size_t, 3> indexes = {i, j, k};
+        // std::sort(indexes.begin(), indexes.end());
 
-        std::unique_lock lock_i((*mutexes)[i], std::try_to_lock);
-        std::unique_lock lock_j((*mutexes)[j], std::try_to_lock);
-        std::unique_lock lock_k((*mutexes)[k], std::try_to_lock);
-
-        if (lock_i.owns_lock() && lock_j.owns_lock() && lock_k.owns_lock()) {
-            auto sum = (*nums)[i] + (*nums)[j] + (*nums)[k];
-            (*nums)[i] = (*nums)[j] = (*nums)[k] = sum;
+        std::unique_lock lock_i((*mutexes)[indexes[0]], std::try_to_lock);
+        if (!lock_i.owns_lock()) {
+          continue;
         }
+        std::unique_lock lock_j((*mutexes)[indexes[1]], std::try_to_lock);
+        if (!lock_j.owns_lock()) {
+          continue;
+        }
+        std::unique_lock lock_k((*mutexes)[indexes[2]], std::try_to_lock);
+        if (!lock_k.owns_lock()) {
+          continue;
+        }
+        auto sum = (*nums)[i] + (*nums)[j] + (*nums)[k];
+        (*nums)[i] = (*nums)[j] = (*nums)[k] = sum;
 
-        // std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
 
       }
     }));
@@ -134,22 +142,20 @@ static void way_d() {
         std::array<size_t, 3> indexes = {i, j, k};
         std::sort(indexes.begin(), indexes.end());
 
-        std::unique_lock lock1((*mutexes)[indexes[0]], std::try_to_lock);
-        if (!lock1.owns_lock()) {
-          continue;
-        }
-        std::unique_lock lock2((*mutexes)[indexes[1]], std::try_to_lock);
-        if (!lock2.owns_lock()) {
-          continue;
-        }
-        std::unique_lock lock3((*mutexes)[indexes[2]], std::try_to_lock);
-        if (!lock3.owns_lock()) {
-          continue;
-        }
-        auto sum = (*nums)[i] + (*nums)[j] + (*nums)[k];
-        (*nums)[i] = (*nums)[j] = (*nums)[k] = sum;
+        {
+          for (auto l : indexes) {
+            (*mutexes)[l].lock();
+          }
 
-        // std::this_thread::sleep_for(std::chrono::microseconds(20));
+          auto sum = (*nums)[i] + (*nums)[j] + (*nums)[k];
+          (*nums)[i] = (*nums)[j] = (*nums)[k] = sum;
+
+          for (auto l : std::ranges::reverse_view(indexes)) {
+            (*mutexes)[l].unlock();
+          }
+        }
+
+        std::this_thread::sleep_for(std::chrono::microseconds(20));
 
       }
     }));
@@ -160,7 +166,7 @@ static void way_d() {
 
 int main() {
   auto start = std::chrono::high_resolution_clock::now();
-  naive();
+  // naive();
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration = end - start;
   std::cout << "naive time : " << duration.count() << std::endl;
