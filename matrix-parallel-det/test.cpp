@@ -1,6 +1,7 @@
 #include "determine.hpp"
 
 #include <print>
+#include <complex>
 
 static bool test_low_det() {
   size_t max_size = 10;
@@ -151,6 +152,80 @@ static bool test_high_swapped() {
   return true;
 }
 
+static bool is_float_equal(float value, float det, float scale = 1.0f) {
+    const float abs_epsilon = std::numeric_limits<float>::epsilon();
+
+    const float adaptive_epsilon = abs_epsilon * scale * 10;
+
+    return std::fabs(value - det) < adaptive_epsilon;
+}
+
+static bool time_high_test() {
+  std::vector<std::vector<float>> matrix = {
+    {1, 6, 7, 43},
+    {3, 6, 2, 1},
+    {0, 3, 5, 6},
+    {3, 33, 11, 9}
+  };
+  Matrix m(std::move(matrix));
+
+  float det;
+  std::cout << std::endl;
+  for (int i = 1; i <= 20; i++) {
+    max_number_of_threads = i;
+    det = 0;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    det_high(m, det);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+
+    std::cout << "number of threads: " << i << "| time: " << duration.count() << std::endl;
+
+    if (!is_float_equal(det, 11370)) {
+      return false;
+    }
+  }
+  std::cout << std::endl;
+
+  return true;
+}
+
+static bool time_low_test() {
+  // std::vector<std::vector<float>> matrix = {
+  //   {0, 4, 1, 6, 9},
+  //   {1, 4, 0, 3, 5},
+  //   {0, 4, 2, 8, 7},
+  //   {0, 4, 3, 5, 1},
+  //   {0, 4, 4, 6, 5}
+  // };
+  std::vector<std::vector<float>> matrix = {
+    {1, 6, 7, 43},
+    {3, 6, 2, 1},
+    {0, 3, 5, 6},
+    {3, 33, 11, 9}
+  };
+  Matrix m(std::move(matrix));
+
+  float det;
+  std::cout << std::endl;
+  for (int i = 1; i <= 20; i++) {
+    auto start = std::chrono::high_resolution_clock::now();
+    det = det_low(m, i);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+
+    std::cout << "number of threads: " << i << "| time: " << duration.count() << std::endl;
+
+    if (!is_float_equal(det, 11370)) {
+      return false;
+    }
+  }
+  std::cout << std::endl;
+
+  return true;
+}
+
 bool test() {
   using TestCaseT = std::pair<std::function<bool()>, std::string_view>;
 
@@ -158,7 +233,9 @@ bool test() {
     {test_low_det, "test_low_det"},
     {test_high_det, "test_high_det"},
     {test_low_swapped, "test_low_swapped"},
-    {test_high_swapped, "test_high_swapped"}
+    {test_high_swapped, "test_high_swapped"},
+    {time_high_test, "time_high_test"},
+    {time_low_test, "time_low_test"}
   };
 
   bool test_passed = true;

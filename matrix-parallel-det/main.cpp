@@ -24,6 +24,9 @@ Matrix load_matrix_from_file(const std::string &file_name) {
 
 int main() {
   Matrix matrix1 = load_matrix_from_file("../data/matrix_4x4.txt");
+  size_t n;
+  std::cin >> n;
+  max_number_of_threads = n;
 
   auto start1 = std::chrono::high_resolution_clock::now();
   auto res1 = det_low(matrix1);
