@@ -9,8 +9,8 @@ private:
   std::size_t size = 0;
 
   std::mutex mutex;
-  std::condition_variable cv_pop;
-  std::condition_variable cv_push;
+  std::condition_variable cv_del;
+  std::condition_variable cv_add;
 
   std::atomic<bool> end = false;
 public:
@@ -21,19 +21,19 @@ public:
         bool was_poped = false;
 
         std::unique_lock lock(mutex);
-        cv_pop.wait(lock, [this]() {
+        cv_del.wait(lock, [this]() {
           return !queue.empty() || end;
         });
 
         if (!queue.empty()) {
           msg = std::move(queue.front());
           queue.pop();
-          cv_push.notify_one();
+          cv_add.notify_one();
           was_poped = true;
         }
 
         if (was_poped) {
-          out << msg.data;
+          out << msg.get();
         } else {
           std::this_thread::sleep_for(100ns);
         }
@@ -41,27 +41,27 @@ public:
     });
   }
 
-  void add_msg(std::string_view msg) override {
+  void add_msg(std::string msg) override {
     if (end) {
       return;
     }
 
     std::unique_lock lock(mutex);
-    cv_push.wait(lock, [this]() {
+    cv_add.wait(lock, [this]() {
       return queue.size() < size || end;
     });
     if (end) {
       return;
     }
 
-    queue.push(std::move(msg));
-    cv_pop.notify_one();
+    queue.push(Message(std::move(msg)));
+    cv_del.notify_one();
   }
 
   ~CondVarLimLogger() {
     end = true;
-    cv_pop.notify_one();
-    cv_push.notify_all();
+    cv_del.notify_one();
+    cv_add.notify_all();
     log_thread.join();
   }
 };

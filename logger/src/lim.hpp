@@ -30,12 +30,12 @@ public:
           }
         }
 
-        out << msg.data;
+        out << msg.get();
       }
     });
   }
 
-  void add_msg(std::string_view msg) override {
+  void add_msg(std::string msg) override {
     while (!end) {
       std::unique_lock lock(mutex);
       if (end) {
@@ -43,7 +43,7 @@ public:
       }
 
       if (queue.size() < size) {
-        queue.push(Message(msg));
+        queue.push(Message(std::move(msg)));
         break;
       } else {
         lock.unlock();

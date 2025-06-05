@@ -18,8 +18,7 @@ static void test_logger(bool random_delay = false) {
     threads.emplace_back([&logger, th, random_delay](std::stop_token stop_token) {
       int stop = 1000;
       while (stop-- >= 0 && !stop_token.stop_requested()) {
-        auto msg = std::format("{} thread\n", th);
-        logger.add_msg(msg);
+        logger.add_msg(std::format("{} thread\n", th));
         auto delay = std::chrono::nanoseconds(random_delay ? (rand() % 100) : 10);
         std::this_thread::sleep_for(delay);
       }
@@ -28,7 +27,7 @@ static void test_logger(bool random_delay = false) {
 
   std::this_thread::sleep_for(10ms);
 
-  std::println("logger:{},random_delay:{} - done", typeid(LoggerT).name(), random_delay ? "" : "out");
+  std::println("logger:{}, random_delay:{} - done", typeid(LoggerT).name(), random_delay ? "true" : "false");
 }
 
 using Loggers = std::tuple<CondVarUnlimLogger, CondVarLimLogger, UnlimLogger, LimLogger>;

@@ -4,37 +4,24 @@
 #include <cstring>
 
 struct Message {
-  char *data = nullptr;
-  std::size_t size = 0;
+    std::unique_ptr<char[]> data;
+    size_t size = 0;
 
-  Message() = default;
+    Message() = default;
 
-  Message(std::string_view msg) {
-    size = msg.size();
-    data = new char[size];
-    strncpy(data, msg.data(), size);
-  }
-
-  ~Message() {
-    delete data;
-    data = nullptr;
-    size = 0;
-  }
-
-  Message(const Message &other) = delete;
-  Message & operator=(const Message &other) = delete;
-
-  Message(Message &&other) {
-    std::swap(data, other.data);
-    std::swap(size, other.size);
-  }
-
-  Message & operator=(Message &&other) {
-    if (this == &other) {
-      return *this;
+    explicit Message(const std::string& msg) : size(msg.size()) {
+        data = std::make_unique<char[]>(size + 1);
+        std::memcpy(data.get(), msg.c_str(), size);
+        data[size] = '\0';
     }
-    std::swap(data, other.data);
-    std::swap(size, other.size);
-    return *this;
-  }
+
+    Message(const Message&) = delete;
+    Message& operator=(const Message&) = delete;
+
+    Message(Message&& other) noexcept = default;
+    Message& operator=(Message&& other) noexcept = default;
+
+    ~Message() = default;
+
+    const char* get() const { return data.get(); }
 };

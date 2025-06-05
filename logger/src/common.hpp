@@ -18,6 +18,6 @@ protected:
 public:
   Logger(std::ostream &out) : out(out) {}
 
-  virtual void add_msg(std::string_view msg) = 0;
+  virtual void add_msg(std::string msg) = 0;
   virtual ~Logger() = default;
 };

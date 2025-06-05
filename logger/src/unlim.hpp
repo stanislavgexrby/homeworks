@@ -14,8 +14,10 @@ public:
     log_thread = std::jthread([&](std::stop_token stop_token) {
       while (!end && !stop_token.stop_requested()) {
         Message msg;
+
         while (!end) {
           std::unique_lock lock(mutex);
+
           if (queue.empty()) {
             lock.unlock();
             std::this_thread::sleep_for(10ns);
@@ -29,17 +31,17 @@ public:
           break;
         }
 
-        out << msg.data;
+        out << msg.get();
       }
     });
   }
 
-  void add_msg(std::string_view msg) override {
+  void add_msg(std::string msg) override {
     if (end) {
       return;
     }
     std::lock_guard lock(mutex);
-    queue.push(Message(msg));
+    queue.push(Message(std::move(msg)));
   }
 
   ~UnlimLogger() {

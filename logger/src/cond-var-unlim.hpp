@@ -31,7 +31,7 @@ public:
         lock.unlock();
 
         if (was_poped) {
-          out << msg.data;
+          out << msg.get();
         } else {
           std::this_thread::sleep_for(10ns);
         }
@@ -39,12 +39,12 @@ public:
     });
   }
 
-  void add_msg(std::string_view msg) override {
+  void add_msg(std::string msg) override {
     if (end) {
       return;
     }
     std::lock_guard lock(mutex);
-    queue.push(Message(msg));
+    queue.push(Message(std::move(msg)));
     cv.notify_one();
   }
 
