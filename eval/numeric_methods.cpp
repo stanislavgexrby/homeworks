@@ -1,161 +1,117 @@
 #include "numeric_methods.hpp"
 
-std::string get_method_name(NumericalMethod method) {
-    switch (method) {
-        case NumericalMethod::BISECTION:
-            return "Bisection";
-        case NumericalMethod::NEWTON:
-            return "Newton";
-        case NumericalMethod::MODIFIED_NEWTON:
-            return "Modified Newton";
-        case NumericalMethod::SECANT:
-            return "Secant";
-        default:
-            return "Unknown";
+vector<Interval> find_sign_change_intervals(double A, double B, function<double(double)> f, int N) {
+    vector<Interval> intervals;
+    double h = (B - A) / N;
+
+    for (int i = 0; i < N; i++) {
+        double x1 = A + i * h;
+        double x2 = A + (i + 1) * h;
+
+        if (f(x1) * f(x2) <= 0) {
+            intervals.push_back(Interval(x1, x2));
+        }
     }
+
+    return intervals;
 }
 
-std::vector<Interval> find_sign_change_intervals(const Interval& range, MathFunction f, uint32_t num_steps) {
-    if (!f) {
-        throw std::runtime_error("Invalid function reference");
-    }
+SolutionResult bisection_method(const Interval& interval, function<double(double)> f, double eps) {
+    double a = interval.a;
+    double b = interval.b;
+    int iterations = 0;
+    double c;
 
-    std::vector<Interval> sign_change_intervals;
-    double step = range.length() / num_steps;
-    double current = range.start;
+    do {
+        iterations++;
+        c = (a + b) / 2.0;
 
-    for (uint32_t i = 0; i < num_steps; i++) {
-        double next = current + step;
-        // Проверяем смену знака
-        if (f(current) * f(next) <= 0) {
-            sign_change_intervals.emplace_back(current, next);
-        }
-        current = next;
-    }
-
-    return sign_change_intervals;
-}
-
-double bisection_method(const Interval& range, double eps, MathFunction f, uint32_t max_iter) {
-    double a = range.start;
-    double b = range.end;
-
-    if (f(a) * f(b) > 0) {
-        throw std::runtime_error("Function values have same sign at interval endpoints");
-    }
-
-    if (std::abs(f(a)) < eps) return a;
-    if (std::abs(f(b)) < eps) return b;
-
-    for (uint32_t iter = 0; iter < max_iter; iter++) {
-        double c = (a + b) / 2.0;
-        double fc = f(c);
-
-        if (std::abs(fc) <= eps || (b - a) / 2.0 < eps) {
-            return c;
-        }
-
-        if (f(a) * fc < 0) {
+        if (f(a) * f(c) < 0) {
             b = c;
         } else {
             a = c;
         }
-    }
+    } while ((b - a) > eps && abs(f(c)) > eps);
 
-    return (a + b) / 2.0;
+    return {c, iterations, (b - a), abs(f(c))};
 }
 
-double newton_method(const Interval& range, double eps, MathFunction f, MathFunction df, uint32_t max_iter) {
-    if (!df) {
-        throw std::runtime_error("Derivative function is required for Newton method");
-    }
+SolutionResult newton_method(const Interval& interval, function<double(double)> f,
+                           function<double(double)> df, double x0, double eps) {
+    double x = x0;
+    double x_prev;
+    int iterations = 0;
 
-    double x = range.midpoint();
-
-    for (uint32_t iter = 0; iter < max_iter; iter++) {
+    do {
+        iterations++;
+        x_prev = x;
         double fx = f(x);
         double dfx = df(x);
 
-        if (std::abs(fx) <= eps) {
-            return x;
-        }
-
-        if (std::abs(dfx) < 1e-15) {
-            throw std::runtime_error("Derivative is too close to zero");
+        if (abs(dfx) < 1e-15) {
+            cout << "Предупреждение: производная близка к нулю!" << endl;
+            break;
         }
 
         x = x - fx / dfx;
-    }
 
-    return x;
+    } while (abs(x - x_prev) > eps && abs(f(x)) > eps && iterations < 1000);
+
+    return {x, iterations, abs(x - x_prev), abs(f(x))};
 }
 
-double modified_newton_method(const Interval& range, double eps, MathFunction f, MathFunction df, uint32_t max_iter) {
-    if (!df) {
-        throw std::runtime_error("Derivative function is required for modified Newton method");
+SolutionResult modified_newton_method(const Interval& interval, function<double(double)> f, 
+                                    function<double(double)> df, double x0, double eps) {
+    double x = x0;
+    double x_prev;
+    double df0 = df(x0);
+    int iterations = 0;
+
+    if (abs(df0) < 1e-15) {
+        cout << "Ошибка: начальная производная близка к нулю!" << endl;
+        return {x0, 0, 0, abs(f(x0))};
     }
 
-    double x = range.midpoint();
-    double dfx0 = df(x);
-
-    if (std::abs(dfx0) < 1e-15) {
-        throw std::runtime_error("Initial derivative is too close to zero");
-    }
-
-    for (uint32_t iter = 0; iter < max_iter; iter++) {
+    do {
+        iterations++;
+        x_prev = x;
         double fx = f(x);
+        x = x - fx / df0;
 
-        if (std::abs(fx) <= eps) {
-            return x;
-        }
+    } while (abs(x - x_prev) > eps && abs(f(x)) > eps && iterations < 1000);
 
-        x = x - fx / dfx0;
-    }
-
-    return x;
+    return {x, iterations, abs(x - x_prev), abs(f(x))};
 }
 
-double secant_method(const Interval& range, double eps, MathFunction f, uint32_t max_iter) {
-    double x0 = range.start;
-    double x1 = range.end;
+SolutionResult secant_method(const Interval& interval, function<double(double)> f, double eps) {
+    double x0 = interval.a;
+    double x1 = interval.b;
+    double x2;
+    int iterations = 0;
 
-    for (uint32_t iter = 0; iter < max_iter; iter++) {
-        double fx0 = f(x0);
-        double fx1 = f(x1);
+    do {
+        iterations++;
+        double f0 = f(x0);
+        double f1 = f(x1);
 
-        if (std::abs(fx1) <= eps) {
-            return x1;
+        if (abs(f1 - f0) < 1e-15) {
+            cout << "Предупреждение: значения функции слишком близки!" << endl;
+            break;
         }
 
-        if (std::abs(fx1 - fx0) < 1e-15) {
-            throw std::runtime_error("Function values are too close");
-        }
-
-        double x2 = x1 - fx1 * (x1 - x0) / (fx1 - fx0);
+        x2 = x1 - f1 * (x1 - x0) / (f1 - f0);
         x0 = x1;
         x1 = x2;
-    }
 
-    return x1;
+    } while (abs(x1 - x0) > eps && abs(f(x1)) > eps && iterations < 1000);
+
+    return {x1, iterations, abs(x1 - x0), abs(f(x1))};
 }
 
-double solve_equation(const Interval& range, double epsilon,
-                     MathFunction f, MathFunction df,
-                     NumericalMethod method, uint32_t max_iterations) {
-    if (!f) {
-        throw std::runtime_error("Invalid function reference");
-    }
+double test_function(double x) {
+    return 5.0 * sin(2.0 * x) - sqrt(1.0 - x);
+}
 
-    switch (method) {
-        case NumericalMethod::BISECTION:
-            return bisection_method(range, epsilon, f, max_iterations);
-        case NumericalMethod::NEWTON:
-            return newton_method(range, epsilon, f, df, max_iterations);
-        case NumericalMethod::MODIFIED_NEWTON:
-            return modified_newton_method(range, epsilon, f, df, max_iterations);
-        case NumericalMethod::SECANT:
-            return secant_method(range, epsilon, f, max_iterations);
-        default:
-            throw std::runtime_error("Unknown numerical method");
-    }
+double test_derivative(double x) {
+    return 10.0 * cos(2.0 * x) + 1.0 / (2.0 * sqrt(1.0 - x));
 }
