@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+set(CMAKE_CXX_STANDARD 23)
+project(task1)
+add_executable(solver main.cpp solver/solver.cpp)
+add_executable(tests test.cpp solver/solver.cpp)
+add_executable(depth depth.cpp solver/solver.cpp)
