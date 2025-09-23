@@ -31,7 +31,7 @@ SolutionResult bisection_method(const Interval& interval, function<double(double
         } else {
             a = c;
         }
-    } while ((b - a) > eps && abs(f(c)) > eps);
+    } while ((b - a) > 2 * eps);
 
     return {c, iterations, (b - a), abs(f(c))};
 }
@@ -55,7 +55,7 @@ SolutionResult newton_method(const Interval& interval, function<double(double)> 
 
         x = x - fx / dfx;
 
-    } while (abs(x - x_prev) > eps && abs(f(x)) > eps && iterations < 1000);
+    } while (abs(x - x_prev) > eps && iterations < 1000);
 
     return {x, iterations, abs(x - x_prev), abs(f(x))};
 }
@@ -78,7 +78,7 @@ SolutionResult modified_newton_method(const Interval& interval, function<double(
         double fx = f(x);
         x = x - fx / df0;
 
-    } while (abs(x - x_prev) > eps && abs(f(x)) > eps && iterations < 1000);
+    } while (abs(x - x_prev) > eps && iterations < 1000);
 
     return {x, iterations, abs(x - x_prev), abs(f(x))};
 }
@@ -103,7 +103,7 @@ SolutionResult secant_method(const Interval& interval, function<double(double)> 
         x0 = x1;
         x1 = x2;
 
-    } while (abs(x1 - x0) > eps && abs(f(x1)) > eps && iterations < 1000);
+    } while (abs(x1 - x0) > eps && iterations < 1000);
 
     return {x1, iterations, abs(x1 - x0), abs(f(x1))};
 }

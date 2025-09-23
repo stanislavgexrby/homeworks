@@ -20,7 +20,7 @@ void print_parameters(double A, double B) {
 }
 
 void solve_on_interval(const Interval& interval, function<double(double)> f, 
-                      function<double(double)> df, double eps) {
+                      function<double(double)> df, double eps, int pres) {
     
     cout << "Решение на отрезке [" << interval.a << ", " << interval.b << "]" << endl;
     cout << "=========================================" << endl;
@@ -32,7 +32,7 @@ void solve_on_interval(const Interval& interval, function<double(double)> f,
     SolutionResult bisection = bisection_method(interval, f, eps);
     
     cout << "Количество шагов: " << bisection.iterations << endl;
-    cout << "Приближенное решение: x = " << fixed << setprecision(10) << bisection.root << endl;
+    cout << "Приближенное решение: x = " << fixed << setprecision(pres) << bisection.root << endl;
     cout << "Длина последнего отрезка: " << bisection.last_diff << endl;
     cout << "Абсолютная величина невязки: |f(x)| = " << bisection.residual << endl;
     
@@ -46,7 +46,7 @@ void solve_on_interval(const Interval& interval, function<double(double)> f,
     
     cout << "Начальное приближение: x0 = " << x0_newton << endl;
     cout << "Количество шагов: " << newton.iterations << endl;
-    cout << "Приближенное решение: x = " << fixed << setprecision(10) << newton.root << endl;
+    cout << "Приближенное решение: x = " << fixed << setprecision(pres) << newton.root << endl;
     cout << "|x_m - x_{m-1}|: " << newton.last_diff << endl;
     cout << "Абсолютная величина невязки: |f(x)| = " << newton.residual << endl;
     
@@ -60,7 +60,7 @@ void solve_on_interval(const Interval& interval, function<double(double)> f,
     
     cout << "Начальное приближение: x0 = " << x0_modified << endl;
     cout << "Количество шагов: " << modified.iterations << endl;
-    cout << "Приближенное решение: x = " << fixed << setprecision(10) << modified.root << endl;
+    cout << "Приближенное решение: x = " << fixed << setprecision(pres) << modified.root << endl;
     cout << "|x_m - x_{m-1}|: " << modified.last_diff << endl;
     cout << "Абсолютная величина невязки: |f(x)| = " << modified.residual << endl;
     
@@ -71,7 +71,7 @@ void solve_on_interval(const Interval& interval, function<double(double)> f,
     SolutionResult secant = secant_method(interval, f, eps);
     
     cout << "Количество шагов: " << secant.iterations << endl;
-    cout << "Приближенное решение: x = " << fixed << setprecision(10) << secant.root << endl;
+    cout << "Приближенное решение: x = " << fixed << setprecision(pres) << secant.root << endl;
     cout << "|x_m - x_{m-1}|: " << secant.last_diff << endl;
     cout << "Абсолютная величина невязки: |f(x)| = " << secant.residual << endl;
 }
@@ -80,9 +80,6 @@ void run_solver() {
     char c;
     print_header();
     print_function();
-    int N;
-    cout << "Введите количество разбиений(например 1000): ";
-    cin >> N;
     double A, B, eps;
     cout << "Введите начало отрезка: ";
     cin >> A;
@@ -96,18 +93,43 @@ void run_solver() {
         cin >> B;
     }
     cout << "\n\n";
-    print_parameters(A, B);
-    cout << "ОТДЕЛЕНИЕ КОРНЕЙ" << endl;
-    cout << "=========================================" << endl;
-    auto intervals = find_sign_change_intervals(A, B, test_function, N);
-    cout << "Найдено отрезков перемены знака: " << intervals.size() << endl;
-    if (intervals.empty()) {
-        cout << "Корни не найдены на заданном интервале!" << endl;
-        return;
+    int N;
+    cout << "Введите количество разбиений(например 1000): ";
+    cin >> N;
+    while (N <= 0) {
+        cout << "Введите корректное количество разбиений\n";
+        cout << "Введите количество разбиений(например 1000): ";
+        cin >> N;
     }
-    cout << "\nОтрезки перемены знака:" << endl;
-    for (size_t i = 0; i < intervals.size(); i++) {
-        cout << i + 1 << ". [" << intervals[i].a << ", " << intervals[i].b << "]" << endl;
+    string ans;
+    vector<Interval> intervals;
+    while(true) {
+        print_parameters(A, B);
+        cout << "ОТДЕЛЕНИЕ КОРНЕЙ" << endl;
+        cout << "=========================================" << endl;
+        intervals = find_sign_change_intervals(A, B, test_function, N);
+        cout << "Найдено отрезков перемены знака: " << intervals.size() << endl;
+        if (intervals.empty()) {
+            cout << "Корни не найдены на заданном интервале!" << endl;
+        }else {
+            cout << "\nОтрезки перемены знака:" << endl;
+            for (size_t i = 0; i < intervals.size(); i++) {
+                cout << i + 1 << ". [" << intervals[i].a << ", " << intervals[i].b << "]" << endl;
+            }
+        }
+        cout << "Желаете ввести новое разбиение? ";
+        cin >> ans;
+        if (ans == "Да") {
+            cout << "Введите количество разбиений(например 1000): ";
+            cin >> N;
+            while (N <= 0) {
+                cout << "Введите корректное количество разбиений\n";
+                cout << "Введите количество разбиений(например 1000): ";
+                cin >> N;
+            }
+        } else {
+            break;
+        }
     }
     cout << "\nУТОЧНЕНИЕ КОРНЕЙ" << endl;
     cout << "=========================================" << endl;
@@ -121,9 +143,12 @@ void run_solver() {
         } else if (choice == -1) {
             return;
         } else {
-            std::cout << "Введите приближение(например 0.000001): ";
+            std::cout << "Введите приближение(например 1e-6): ";
             std::cin >> eps;
-            solve_on_interval(intervals[choice - 1], test_function, test_derivative, eps);
+            std::cout << "Введите количество знаков после запятой(например 15): ";
+            int pres;
+            std::cin >> pres;
+            solve_on_interval(intervals[choice - 1], test_function, test_derivative, eps, pres);
             cout << "\n=========================================" << endl;
             cout << "РЕШЕНИЕ ЗАВЕРШЕНО" << endl;
             cout << "=========================================" << endl;
